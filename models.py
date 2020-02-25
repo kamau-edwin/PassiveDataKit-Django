@@ -7,7 +7,7 @@ import datetime
 import json
 import random
 import string
-import urlparse
+import urllib.pars as urlparse
 
 import importlib
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
