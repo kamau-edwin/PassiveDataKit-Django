@@ -762,7 +762,7 @@ class DataSource(models.Model):
                 else:
                     self.performance_metadata = json.dumps(metadata, indent=2)
             else:
-                print 'Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url
+                print('Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url)
 
             self.performance_metadata_updated = timezone.now()
 
@@ -1125,7 +1125,7 @@ class ReportJobBatchRequest(models.Model):
 
                                 had_extras = True
                         except TypeError as exception:
-                            print 'Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!'
+                            print('Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!')
                             raise exception
                     except ImportError:
                         pass
