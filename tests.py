@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+
 class TestBasicsTestCase(TestCase):
     def setUp(self):
         pass

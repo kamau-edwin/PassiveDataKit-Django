@@ -10,7 +10,7 @@ import string
 import urllib.parse as urlparse
 
 import importlib
-from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+from distutils.version import LooseVersion  # pylint: disable=no-name-in-module, import-error
 
 import requests
 
@@ -65,6 +65,7 @@ COMPRESSION_CHOICES = (
     ('gzip', 'Gzip'),
 )
 
+
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
         try:
@@ -87,7 +88,7 @@ def generator_slugify(str_obj):
 
 
 def install_supports_jsonfield():
-    global DB_SUPPORTS_JSON # pylint: disable=global-statement
+    global DB_SUPPORTS_JSON  # pylint: disable=global-statement
 
     if DB_SUPPORTS_JSON is None:
         try:
@@ -96,7 +97,8 @@ def install_supports_jsonfield():
             DB_SUPPORTS_JSON = False
 
         try:
-            DB_SUPPORTS_JSON = (settings.PDK_DISABLE_NATIVE_JSON_FIELDS is False)
+            DB_SUPPORTS_JSON = (
+                settings.PDK_DISABLE_NATIVE_JSON_FIELDS is False)
         except AttributeError:
             pass
 
@@ -107,7 +109,8 @@ class DataGeneratorDefinition(models.Model):
     generator_identifier = models.CharField(max_length=1024)
 
     name = models.CharField(max_length=1024)
-    description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+    description = models.TextField(
+        max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
         return self.generator_identifier
@@ -117,14 +120,17 @@ class DataGeneratorDefinition(models.Model):
         try:
             return DataGeneratorDefinition.objects.get(generator_identifier=generator_identifier)
         except MultipleObjectsReturned:
-            first_definition = DataGeneratorDefinition.objects.filter(generator_identifier=generator_identifier).order_by('pk').first()
+            first_definition = DataGeneratorDefinition.objects.filter(
+                generator_identifier=generator_identifier).order_by('pk').first()
 
-            other_definitions = DataGeneratorDefinition.objects.filter(generator_identifier=generator_identifier).order_by('pk')[1:]
+            other_definitions = DataGeneratorDefinition.objects.filter(
+                generator_identifier=generator_identifier).order_by('pk')[1:]
 
             to_delete = []
 
             for definition in other_definitions:
-                DataPoint.objects.filter(generator_definition=definition).update(generator_definition=first_definition)
+                DataPoint.objects.filter(generator_definition=definition).update(
+                    generator_definition=first_definition)
 
                 to_delete.append(definition)
 
@@ -133,7 +139,8 @@ class DataGeneratorDefinition(models.Model):
 
             return first_definition
         except ObjectDoesNotExist:
-            definition = DataGeneratorDefinition(generator_identifier=generator_identifier)
+            definition = DataGeneratorDefinition(
+                generator_identifier=generator_identifier)
             definition.save()
 
             return definition
@@ -150,14 +157,17 @@ class DataSourceReference(models.Model):
         try:
             return DataSourceReference.objects.get(source=source)
         except MultipleObjectsReturned:
-            first_source = DataSourceReference.objects.filter(source=source).order_by('pk').first()
+            first_source = DataSourceReference.objects.filter(
+                source=source).order_by('pk').first()
 
-            other_sources = DataSourceReference.objects.filter(source=source).order_by('pk')[1:]
+            other_sources = DataSourceReference.objects.filter(
+                source=source).order_by('pk')[1:]
 
             to_delete = []
 
             for reference in other_sources:
-                DataPoint.objects.filter(source_reference=reference).update(source_reference=first_source)
+                DataPoint.objects.filter(source_reference=reference).update(
+                    source_reference=first_source)
 
                 to_delete.append(reference)
 
@@ -194,7 +204,8 @@ class DataPointQuerySet(QuerySet):
         if not is_postgres or is_filtered:
             return super(DataPointQuerySet, self).count()
 
-        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
+        data_point_count = DataServerMetadatum.objects.filter(
+            key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
         if data_point_count is None:
             return super(DataPointQuerySet, self).count()
@@ -206,7 +217,7 @@ class DataPointManager(models.Manager):
     def get_queryset(self):
         return DataPointQuerySet(self.model, using=self._db)
 
-    def sources(self): # pylint: disable=no-self-use
+    def sources(self):  # pylint: disable=no-self-use
         sources = []
 
         for reference in DataSourceReference.objects.all():
@@ -215,10 +226,11 @@ class DataPointManager(models.Manager):
 
         return sources
 
-    def generator_identifiers_for_source(self, source, since=None): # pylint: disable=invalid-name, no-self-use
+    def generator_identifiers_for_source(self, source, since=None):  # pylint: disable=invalid-name, no-self-use
         identifiers = []
 
-        source_reference = DataSourceReference.objects.filter(source=source).first()
+        source_reference = DataSourceReference.objects.filter(
+            source=source).first()
 
         for definition in DataGeneratorDefinition.objects.all():
             if since is not None:
@@ -227,7 +239,8 @@ class DataPointManager(models.Manager):
             else:
                 key = LATEST_POINT_DATUM + ': ' + source + '/' + definition.generator_identifier
 
-                latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+                latest_point_datum = DataServerMetadatum.objects.filter(
+                    key=key).first()
 
                 if latest_point_datum is not None:
                     identifiers.append(definition.generator_identifier)
@@ -236,7 +249,7 @@ class DataPointManager(models.Manager):
 
         return identifiers
 
-    def generator_identifiers(self): # pylint: disable=invalid-name, no-self-use
+    def generator_identifiers(self):  # pylint: disable=invalid-name, no-self-use
         identifiers = []
 
         for definition in DataGeneratorDefinition.objects.all():
@@ -244,36 +257,43 @@ class DataPointManager(models.Manager):
 
         return identifiers
 
-    def latest_point(self, source, identifier): # pylint: disable=no-self-use
+    def latest_point(self, source, identifier):  # pylint: disable=no-self-use
         key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
 
-        latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+        latest_point_datum = DataServerMetadatum.objects.filter(
+            key=key).first()
 
         point = None
 
         if latest_point_datum is not None:
-            point = DataPoint.objects.filter(pk=int(latest_point_datum.value)).first()
+            point = DataPoint.objects.filter(
+                pk=int(latest_point_datum.value)).first()
 
         if point is None:
-            source_reference = DataSourceReference.objects.filter(source=source).first()
+            source_reference = DataSourceReference.objects.filter(
+                source=source).first()
 
             if source_reference is None:
                 return None
 
             if identifier == 'pdk-data-frequency':
                 if DataPoint.objects.filter(source_reference=source_reference).count() > 0:
-                    point = DataPoint.objects.filter(source_reference=source_reference).order_by('-pk').first()
+                    point = DataPoint.objects.filter(
+                        source_reference=source_reference).order_by('-pk').first()
             else:
-                generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier).first()
+                generator_definition = DataGeneratorDefinition.objects.filter(
+                    generator_identifier=identifier).first()
 
                 if generator_definition is None:
                     return None
 
                 if DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).count() > 0:
-                    point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-pk').first()
+                    point = DataPoint.objects.filter(
+                        source_reference=source_reference, generator_definition=generator_definition).order_by('-pk').first()
 
             if point is not None:
-                latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+                latest_point_datum = DataServerMetadatum.objects.filter(
+                    key=key).first()
 
                 if latest_point_datum is None:
                     latest_point_datum = DataServerMetadatum(key=key)
@@ -289,7 +309,8 @@ class DataPointManager(models.Manager):
         if latest_point is None or latest_point.created < new_point.created:
             key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
 
-            latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+            latest_point_datum = DataServerMetadatum.objects.filter(
+                key=key).first()
 
             if latest_point_datum is None:
                 latest_point_datum = DataServerMetadatum(key=key)
@@ -297,7 +318,7 @@ class DataPointManager(models.Manager):
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 
-    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None): # pylint: disable=no-self-use, too-many-arguments
+    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None):  # pylint: disable=no-self-use, too-many-arguments
         now = timezone.now()
 
         if created is None:
@@ -310,7 +331,8 @@ class DataPointManager(models.Manager):
             'source': source
         }
 
-        point = DataPoint(source=source, generator=payload['passive-data-metadata']['generator'], generator_identifier=identifier)
+        point = DataPoint(
+            source=source, generator=payload['passive-data-metadata']['generator'], generator_identifier=identifier)
 
         if install_supports_jsonfield():
             point.properties = payload
@@ -329,8 +351,8 @@ class DataPointManager(models.Manager):
         point.fetch_secondary_identifier()
 
 
-class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+class DataPoint(models.Model):  # pylint: disable=too-many-instance-attributes
+    class Meta:  # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['source', 'created'],
             ['source', 'user_agent'],
@@ -342,7 +364,8 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
             ['source', 'generator_identifier', 'secondary_identifier'],
             ['source', 'generator_identifier', 'secondary_identifier', 'created'],
             ['source', 'generator_identifier', 'secondary_identifier', 'recorded'],
-            ['source', 'generator_identifier', 'secondary_identifier', 'created', 'recorded'],
+            ['source', 'generator_identifier',
+                'secondary_identifier', 'created', 'recorded'],
             ['generator_identifier', 'created'],
             ['generator_identifier', 'recorded'],
             ['generator_identifier', 'created', 'recorded'],
@@ -361,13 +384,18 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
     source = models.CharField(max_length=1024, db_index=True)
     generator = models.CharField(max_length=1024, db_index=True)
-    generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
-    secondary_identifier = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+    generator_identifier = models.CharField(
+        max_length=1024, db_index=True, default='unknown-generator')
+    secondary_identifier = models.CharField(
+        max_length=1024, db_index=True, null=True, blank=True)
 
-    generator_definition = models.ForeignKey(DataGeneratorDefinition, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
-    source_reference = models.ForeignKey(DataSourceReference, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
+    generator_definition = models.ForeignKey(
+        DataGeneratorDefinition, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
+    source_reference = models.ForeignKey(
+        DataSourceReference, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
 
-    user_agent = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+    user_agent = models.CharField(
+        max_length=1024, db_index=True, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True, blank=True)
@@ -389,9 +417,11 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
                 generator_name = generator_slugify(self.generator_identifier)
 
                 try:
-                    generator = importlib.import_module(app + '.generators.' + generator_name)
+                    generator = importlib.import_module(
+                        app + '.generators.' + generator_name)
 
-                    identifier = generator.extract_secondary_identifier(self.fetch_properties())
+                    identifier = generator.extract_secondary_identifier(
+                        self.fetch_properties())
 
                     if identifier is not None:
                         self.secondary_identifier = identifier
@@ -409,14 +439,15 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
     def fetch_properties(self):
         try:
-            return self.cached_properties # pylint: disable=access-member-before-definition
+            return self.cached_properties  # pylint: disable=access-member-before-definition
         except AttributeError:
             pass
 
         if install_supports_jsonfield():
-            self.cached_properties = self.properties # pylint: disable=attribute-defined-outside-init
+            self.cached_properties = self.properties  # pylint: disable=attribute-defined-outside-init
         else:
-            self.cached_properties = json.loads(self.properties) # pylint: disable=attribute-defined-outside-init
+            self.cached_properties = json.loads(
+                self.properties)  # pylint: disable=attribute-defined-outside-init
 
         return self.cached_properties
 
@@ -426,7 +457,8 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
             if 'passive-data-metadata' in properties:
                 if 'generator' in properties['passive-data-metadata']:
-                    tokens = properties['passive-data-metadata']['generator'].split(':', 1)
+                    tokens = properties['passive-data-metadata']['generator'].split(
+                        ':', 1)
 
                     self.user_agent = tokens[-1].strip()
 
@@ -439,10 +471,12 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
         if self.generator_identifier in CACHED_GENERATOR_DEFINITIONS:
             generator_definition = CACHED_GENERATOR_DEFINITIONS[self.generator_identifier]
         else:
-            generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=self.generator_identifier).first()
+            generator_definition = DataGeneratorDefinition.objects.filter(
+                generator_identifier=self.generator_identifier).first()
 
             if generator_definition is None:
-                generator_definition = DataGeneratorDefinition(generator_identifier=self.generator_identifier, name=self.generator_identifier)
+                generator_definition = DataGeneratorDefinition(
+                    generator_identifier=self.generator_identifier, name=self.generator_identifier)
                 generator_definition.save()
 
             CACHED_GENERATOR_DEFINITIONS[self.generator_identifier] = generator_definition
@@ -459,7 +493,8 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
         if self.source in CACHED_SOURCE_REFERENCES:
             source_reference = CACHED_SOURCE_REFERENCES[self.source]
         else:
-            source_reference = DataSourceReference.objects.filter(source=self.source).order_by('pk').first()
+            source_reference = DataSourceReference.objects.filter(
+                source=self.source).order_by('pk').first()
 
             if source_reference is None:
                 source_reference = DataSourceReference(source=self.source)
@@ -475,26 +510,29 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         return CACHED_SOURCE_REFERENCES[self.source]
 
+
 @receiver(post_save, sender=DataPoint)
-def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
+def data_point_post_save(sender, instance, *args, **kwargs):  # pylint: disable=unused-argument
     try:
         del instance.cached_properties
     except AttributeError:
         pass
 
+
 class DataServerMetadatum(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta:  # pylint: disable=old-style-class, no-init, too-few-public-methods
         verbose_name_plural = "data server metadata"
 
     key = models.CharField(max_length=1024, db_index=True)
     value = models.TextField(max_length=1048576)
     last_updated = models.DateTimeField(null=True, blank=True)
 
-    def formatted_value(self): # pylint: disable=no-self-use
+    def formatted_value(self):  # pylint: disable=no-self-use
         return 'TODO'
 
+
 @receiver(pre_save, sender=DataServerMetadatum)
-def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
+def data_server_metadatum_pre_save(sender, instance, *args, **kwargs):  # pylint: disable=unused-argument
     instance.last_updated = timezone.now()
 
 
@@ -510,12 +548,15 @@ class DataBundle(models.Model):
 
     processed = models.BooleanField(default=False, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
-    compression = models.CharField(max_length=128, choices=COMPRESSION_CHOICES, default='none', db_index=True)
+    compression = models.CharField(
+        max_length=128, choices=COMPRESSION_CHOICES, default='none', db_index=True)
 
 
 class DataFile(models.Model):
-    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
-    data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
+    data_point = models.ForeignKey(
+        DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
+    data_bundle = models.ForeignKey(
+        DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
 
     identifier = models.CharField(max_length=256, db_index=True)
     content_type = models.CharField(max_length=256, db_index=True)
@@ -530,18 +571,22 @@ class DataSourceGroup(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class DataServer(models.Model):
     name = models.CharField(max_length=1024, unique=True)
     upload_url = models.URLField(max_length=1024, unique=True)
-    source_metadata_url = models.URLField(max_length=1024, null=True, blank=True)
+    source_metadata_url = models.URLField(
+        max_length=1024, null=True, blank=True)
 
-    request_key = models.CharField(max_length=1024, default='', null=True, blank=True)
+    request_key = models.CharField(
+        max_length=1024, default='', null=True, blank=True)
 
     def __unicode__(self):
         return unicode(self.name)
 
-class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
-    def sources(self): # pylint: disable=no-self-use
+
+class DataSourceManager(models.Manager):  # pylint: disable=too-few-public-methods
+    def sources(self):  # pylint: disable=no-self-use
         source_list = []
 
         for source in DataSource.objects.all():
@@ -557,18 +602,22 @@ class DataSource(models.Model):
     identifier = models.CharField(max_length=1024, db_index=True)
     name = models.CharField(max_length=1024, db_index=True, unique=True)
 
-    group = models.ForeignKey(DataSourceGroup, related_name='sources', blank=True, null=True, on_delete=models.SET_NULL)
+    group = models.ForeignKey(DataSourceGroup, related_name='sources',
+                              blank=True, null=True, on_delete=models.SET_NULL)
 
     suppress_alerts = models.BooleanField(default=False)
 
     if install_supports_jsonfield():
         performance_metadata = JSONField(null=True, blank=True)
     else:
-        performance_metadata = models.TextField(max_length=(32 * 1024 * 1024 * 1024), null=True, blank=True)
+        performance_metadata = models.TextField(max_length=(
+            32 * 1024 * 1024 * 1024), null=True, blank=True)
 
-    performance_metadata_updated = models.DateTimeField(db_index=True, null=True, blank=True)
+    performance_metadata_updated = models.DateTimeField(
+        db_index=True, null=True, blank=True)
 
-    server = models.ForeignKey(DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
+    server = models.ForeignKey(
+        DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.name + ' (' + self.identifier + ')'
@@ -601,7 +650,8 @@ class DataSource(models.Model):
             try:
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
-                definition = pdk_api.annotate_source_definition(self, definition)
+                definition = pdk_api.annotate_source_definition(
+                    self, definition)
             except ImportError:
                 pass
             except AttributeError:
@@ -632,7 +682,8 @@ class DataSource(models.Model):
         return False
 
     def fetch_source_reference(self):
-        source_reference = DataSourceReference.objects.filter(source=self.identifier).first()
+        source_reference = DataSourceReference.objects.filter(
+            source=self.identifier).first()
 
         if source_reference is None:
             source_reference = DataSourceReference(source=self.identifier)
@@ -640,7 +691,7 @@ class DataSource(models.Model):
 
         return source_reference
 
-    def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+    def update_performance_metadata(self):  # pylint: disable=too-many-branches, too-many-statements, too-many-locals
         if self.server is None:
             source_reference = self.fetch_source_reference()
 
@@ -652,7 +703,8 @@ class DataSource(models.Model):
 
             day_ago = timezone.now() - datetime.timedelta(days=1)
 
-            DataPoint.objects.filter(source_reference=source_reference, server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
+            DataPoint.objects.filter(source_reference=source_reference, server_generated=False,
+                                     user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
             # Update latest_point
 
@@ -663,9 +715,11 @@ class DataSource(models.Model):
             if latest_point is not None:
                 query = query & Q(created__gt=latest_point.created)
             else:
-                latest_point = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
+                latest_point = DataPoint.objects.filter(
+                    source_reference=source_reference).order_by('-created').first()
 
-            point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
+            point = DataPoint.objects.filter(query).exclude(
+                server_generated=True).order_by('-created').first()
 
             while point is not None:
                 user_agent = point.fetch_user_agent()
@@ -677,37 +731,44 @@ class DataSource(models.Model):
 
                     point = None
                 else:
-                    point = DataPoint.objects.filter(source_reference=source_reference, server_generated=False, created__lt=point.created).order_by('-created').first()
+                    point = DataPoint.objects.filter(
+                        source_reference=source_reference, server_generated=False, created__lt=point.created).order_by('-created').first()
 
                     if point is not None:
                         metadata['latest_point'] = point.pk
 
             if latest_point is not None:
                 metadata['user_agent'] = latest_point.fetch_user_agent()
-                metadata['latest_point_created'] = calendar.timegm(latest_point.created.timetuple())
+                metadata['latest_point_created'] = calendar.timegm(
+                    latest_point.created.timetuple())
 
             # Update point_count
 
-            metadata['point_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).count()
+            metadata['point_count'] = DataPoint.objects.filter(
+                source_reference=source_reference, created__gte=window_start).count()
 
             # Update point_frequency
 
             metadata['point_frequency'] = 0
 
             if metadata['point_count'] > 1:
-                earliest_point = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).order_by('created').first()
+                earliest_point = DataPoint.objects.filter(
+                    source_reference=source_reference, created__gte=window_start).order_by('created').first()
 
-                seconds = (latest_point.created - earliest_point.created).total_seconds()
+                seconds = (latest_point.created -
+                           earliest_point.created).total_seconds()
 
                 if seconds > 0:
                     metadata['point_frequency'] = metadata['point_count'] / seconds
 
             generators = []
 
-            identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
+            identifiers = DataPoint.objects.generator_identifiers_for_source(
+                self.identifier, since=window_start)
 
             for identifier in identifiers:
-                definition = DataGeneratorDefinition.definition_for_identifier(identifier)
+                definition = DataGeneratorDefinition.definition_for_identifier(
+                    identifier)
 
                 generator = {}
 
@@ -715,21 +776,30 @@ class DataSource(models.Model):
                 generator['source'] = self.identifier
                 generator['label'] = generator_label(identifier)
 
-                generator['points_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start, generator_definition=definition).count()
+                generator['points_count'] = DataPoint.objects.filter(
+                    source_reference=source_reference, created__gte=window_start, generator_definition=definition).count()
 
-                first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
-                last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
-                last_recorded = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
+                first_point = DataPoint.objects.filter(
+                    source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
+                last_point = DataPoint.objects.filter(
+                    source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
+                last_recorded = DataPoint.objects.filter(
+                    source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
 
                 if last_recorded is not None:
-                    generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
-                    generator['first_created'] = calendar.timegm(first_point.created.timetuple())
-                    generator['last_created'] = calendar.timegm(last_point.created.timetuple())
+                    generator['last_recorded'] = calendar.timegm(
+                        last_recorded.recorded.timetuple())
+                    generator['first_created'] = calendar.timegm(
+                        first_point.created.timetuple())
+                    generator['last_created'] = calendar.timegm(
+                        last_point.created.timetuple())
 
-                    duration = (last_point.created - first_point.created).total_seconds()
+                    duration = (last_point.created -
+                                first_point.created).total_seconds()
 
                     if generator['points_count'] > 1 and duration > 0:
-                        generator['frequency'] = float(generator['points_count']) / duration
+                        generator['frequency'] = float(
+                            generator['points_count']) / duration
                     else:
                         generator['frequency'] = 0
 
@@ -752,7 +822,8 @@ class DataSource(models.Model):
                 'request-key': self.server.request_key
             }
 
-            identifier_post = requests.post(self.server.source_metadata_url, data=payload)
+            identifier_post = requests.post(
+                self.server.source_metadata_url, data=payload)
 
             if identifier_post.status_code >= 200 and identifier_post.status_code < 300:
                 metadata = identifier_post.json()
@@ -762,7 +833,8 @@ class DataSource(models.Model):
                 else:
                     self.performance_metadata = json.dumps(metadata, indent=2)
             else:
-                print('Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url)
+                print('Server code ' + str(identifier_post.status_code) + ' received for request for ' +
+                      self.identifier + ' metadata from ' + self.server.source_metadata_url)
 
             self.performance_metadata_updated = timezone.now()
 
@@ -782,9 +854,11 @@ class DataSource(models.Model):
         if 'earliest_point' in metadata:
             return DataPoint.objects.filter(pk=metadata['earliest_point']).first()
 
-        source_reference = DataSourceReference.reference_for_source(self.identifier)
+        source_reference = DataSourceReference.reference_for_source(
+            self.identifier)
 
-        point = DataPoint.objects.filter(source_reference=source_reference).order_by('created').first()
+        point = DataPoint.objects.filter(
+            source_reference=source_reference).order_by('created').first()
 
         if point is not None:
             metadata['earliest_point'] = point.pk
@@ -833,7 +907,8 @@ class DataSource(models.Model):
 
                 if 'passive-data-metadata' in properties:
                     if 'generator' in properties['passive-data-metadata']:
-                        tokens = properties['passive-data-metadata']['generator'].split(':')
+                        tokens = properties['passive-data-metadata']['generator'].split(
+                            ':')
 
                         return tokens[-1].strip()
         else:
@@ -861,10 +936,12 @@ class DataSource(models.Model):
     def join_default_group(self):
         try:
             if settings.PDK_DEFAULT_GROUP_NAME is not None:
-                group = DataSourceGroup.objects.filter(name=settings.PDK_DEFAULT_GROUP_NAME).first()
+                group = DataSourceGroup.objects.filter(
+                    name=settings.PDK_DEFAULT_GROUP_NAME).first()
 
                 if group is None:
-                    group = DataSourceGroup(name=settings.PDK_DEFAULT_GROUP_NAME)
+                    group = DataSourceGroup(
+                        name=settings.PDK_DEFAULT_GROUP_NAME)
                     group.save()
 
                 self.group = group
@@ -876,15 +953,18 @@ class DataSource(models.Model):
 
 class DataSourceAlert(models.Model):
     alert_name = models.CharField(max_length=1024)
-    alert_level = models.CharField(max_length=64, choices=ALERT_LEVEL_CHOICES, default='info', db_index=True)
+    alert_level = models.CharField(
+        max_length=64, choices=ALERT_LEVEL_CHOICES, default='info', db_index=True)
 
     if install_supports_jsonfield():
         alert_details = JSONField()
     else:
         alert_details = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    data_source = models.ForeignKey(DataSource, related_name='alerts',on_delete=models.CASCADE)
-    generator_identifier = models.CharField(max_length=1024, null=True, blank=True)
+    data_source = models.ForeignKey(
+        DataSource, related_name='alerts', on_delete=models.CASCADE)
+    generator_identifier = models.CharField(
+        max_length=1024, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
     updated = models.DateTimeField(null=True, blank=True, db_index=True)
@@ -918,8 +998,9 @@ class DataSourceAlert(models.Model):
 
         return definition
 
+
 @receiver(pre_save, sender=DataSourceAlert)
-def data_source_alert_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+def data_source_alert_pre_save_handler(sender, **kwargs):  # pylint: disable=unused-argument, invalid-name
     alert = kwargs['instance']
 
     alert_details = alert.alert_details
@@ -932,15 +1013,17 @@ def data_source_alert_pre_save_handler(sender, **kwargs): # pylint: disable=unus
     else:
         alert.alert_details = json.dumps(alert_details, indent=2)
 
+
 class DataPointVisualization(models.Model):
     source = models.CharField(max_length=1024, db_index=True)
     generator_identifier = models.CharField(max_length=1024, db_index=True)
     last_updated = models.DateTimeField(db_index=True)
 
 
-class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
-    def create_jobs(self, user, sources, generators, export_raw=False, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use, too-many-arguments
-        batch_request = ReportJobBatchRequest(requester=user, requested=timezone.now())
+class ReportJobManager(models.Manager):  # pylint: disable=too-few-public-methods
+    def create_jobs(self, user, sources, generators, export_raw=False, data_start=None, data_end=None, date_type='created'):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use, too-many-arguments
+        batch_request = ReportJobBatchRequest(
+            requester=user, requested=timezone.now())
 
         params = {}
 
@@ -958,10 +1041,12 @@ class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
 
         batch_request.save()
 
+
 class ReportJob(models.Model):
     objects = ReportJobManager()
 
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     requested = models.DateTimeField(db_index=True)
     started = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -977,8 +1062,9 @@ class ReportJob(models.Model):
 
     report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
 
+
 @receiver(post_delete, sender=ReportJob)
-def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
+def report_job_post_delete_handler(sender, **kwargs):  # pylint: disable=unused-argument
     job = kwargs['instance']
 
     try:
@@ -989,7 +1075,8 @@ def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-a
 
 
 class ReportDestination(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='pdk_report_destinations', on_delete=models.CASCADE)
 
     destination = models.CharField(max_length=4096)
     description = models.CharField(max_length=4096, null=True, blank=True)
@@ -1016,8 +1103,9 @@ class ReportDestination(models.Model):
             except AttributeError:
                 pass
 
+
 @receiver(pre_save, sender=ReportDestination)
-def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+def report_destination_pre_save_handler(sender, **kwargs):  # pylint: disable=unused-argument, invalid-name
     destination = kwargs['instance']
 
     parameters = destination.parameters
@@ -1030,8 +1118,10 @@ def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unu
     else:
         destination.parameters = json.dumps(parameters, indent=2)
 
+
 class ReportJobBatchRequest(models.Model):
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     requested = models.DateTimeField(db_index=True)
     started = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -1042,7 +1132,7 @@ class ReportJobBatchRequest(models.Model):
     else:
         parameters = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    def process(self): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    def process(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         self.started = timezone.now()
         self.save()
 
@@ -1104,7 +1194,7 @@ class ReportJobBatchRequest(models.Model):
         except AttributeError:
             generator_query = None
 
-            for generator in params['generators']: # pylint: disable=too-many-nested-blocks
+            for generator in params['generators']:  # pylint: disable=too-many-nested-blocks
                 had_extras = False
 
                 for app in settings.INSTALLED_APPS:
@@ -1112,20 +1202,25 @@ class ReportJobBatchRequest(models.Model):
                         pdk_api = importlib.import_module(app + '.pdk_api')
 
                         try:
-                            other_generators = pdk_api.generators_for_extra_generator(generator)
+                            other_generators = pdk_api.generators_for_extra_generator(
+                                generator)
 
                             for other_generator in other_generators:
-                                definition = DataGeneratorDefinition.objects.filter(generator_identifier=other_generator).first()
+                                definition = DataGeneratorDefinition.objects.filter(
+                                    generator_identifier=other_generator).first()
 
                                 if definition is not None:
                                     if generator_query is None:
-                                        generator_query = Q(generator_definition=definition)
+                                        generator_query = Q(
+                                            generator_definition=definition)
                                     else:
-                                        generator_query = generator_query |  Q(generator_definition=definition)
+                                        generator_query = generator_query | Q(
+                                            generator_definition=definition)
 
                                 had_extras = True
                         except TypeError as exception:
-                            print('Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!')
+                            print('Verify that ' + app + '.' + generator +
+                                  ' implements all generators_for_extra_generator arguments!')
                             raise exception
                     except ImportError:
                         pass
@@ -1133,12 +1228,14 @@ class ReportJobBatchRequest(models.Model):
                         pass
 
                 if had_extras is False:
-                    definition = DataGeneratorDefinition.objects.filter(generator_identifier=generator).first()
+                    definition = DataGeneratorDefinition.objects.filter(
+                        generator_identifier=generator).first()
 
                     if generator_query is None:
                         generator_query = Q(generator_definition=definition)
                     else:
-                        generator_query = generator_query | Q(generator_definition=definition)
+                        generator_query = generator_query | Q(
+                            generator_definition=definition)
 
             report_size = 0
 
@@ -1149,10 +1246,12 @@ class ReportJobBatchRequest(models.Model):
 
                 query_size = 0
 
-                source_reference = DataSourceReference.objects.filter(source=source).first()
+                source_reference = DataSourceReference.objects.filter(
+                    source=source).first()
 
                 if source_reference is not None:
-                    source_query = Q(source_reference=source_reference) & generator_query
+                    source_query = Q(
+                        source_reference=source_reference) & generator_query
 
                     query_size = DataPoint.objects.filter(source_query).count()
                 if report_size == 0 or (report_size + query_size) < target_size:
@@ -1160,7 +1259,8 @@ class ReportJobBatchRequest(models.Model):
 
                     report_size += query_size
                 else:
-                    job = ReportJob(requester=self.requester, requested=requested)
+                    job = ReportJob(requester=self.requester,
+                                    requested=requested)
 
                     job_params = {}
 
@@ -1214,8 +1314,9 @@ class ReportJobBatchRequest(models.Model):
         self.completed = timezone.now()
         self.save()
 
+
 @receiver(pre_save, sender=ReportJobBatchRequest)
-def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+def report_job_batch_request_pre_save_handler(sender, **kwargs):  # pylint: disable=unused-argument, invalid-name
     job = kwargs['instance']
 
     parameters = job.parameters
@@ -1228,6 +1329,7 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
     else:
         job.parameters = json.dumps(parameters, indent=2)
 
+
 class AppConfiguration(models.Model):
     name = models.CharField(max_length=1024)
     id_pattern = models.CharField(max_length=1024)
@@ -1236,7 +1338,8 @@ class AppConfiguration(models.Model):
     if install_supports_jsonfield():
         configuration_json = JSONField()
     else:
-        configuration_json = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+        configuration_json = models.TextField(
+            max_length=(32 * 1024 * 1024 * 1024))
 
     evaluate_order = models.IntegerField(default=1)
 
@@ -1249,12 +1352,14 @@ class AppConfiguration(models.Model):
 
         return json.loads(self.configuration_json)
 
+
 class DataServerApiToken(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta:  # pylint: disable=old-style-class, no-init, too-few-public-methods
         verbose_name = "data server API token"
         verbose_name_plural = "data server API tokens"
 
-    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        get_user_model(), related_name='pdk_api_tokens', on_delete=models.CASCADE)
     token = models.CharField(max_length=1024, null=True, blank=True)
     expires = models.DateTimeField(null=True, blank=True)
 
@@ -1262,10 +1367,12 @@ class DataServerApiToken(models.Model):
         if (self.token is not None) and (self.token.strip() != ''):
             return self.token
 
-        self.token = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
+        self.token = ''.join(random.SystemRandom().choice(
+            string.ascii_letters + string.digits) for _ in range(64))
         self.save()
 
         return self.token
+
 
 class DataServerAccessRequest(models.Model):
     user_identifier = models.CharField(max_length=4096, db_index=True)
@@ -1273,6 +1380,7 @@ class DataServerAccessRequest(models.Model):
     request_time = models.DateTimeField(db_index=True)
     request_metadata = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
     successful = models.BooleanField(default=True, db_index=True)
+
 
 class DataServerAccessRequestPending(models.Model):
     user_identifier = models.CharField(max_length=4096)
@@ -1298,22 +1406,28 @@ class DataServerAccessRequestPending(models.Model):
         self.processed = True
         self.save()
 
+
 class DeviceModel(models.Model):
     model = models.CharField(max_length=1024, unique=True)
     manufacturer = models.CharField(max_length=1024)
 
-    reference = models.URLField(max_length=(1024 * 1024), null=True, blank=True)
+    reference = models.URLField(max_length=(
+        1024 * 1024), null=True, blank=True)
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
         return unicode(self.model + ' (' + self.manufacturer + ')')
 
-class Device(models.Model):
-    source = models.ForeignKey(DataSource, related_name='devices', on_delete=models.CASCADE)
 
-    model = models.ForeignKey(DeviceModel, related_name='devices', on_delete=models.CASCADE)
-    platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+class Device(models.Model):
+    source = models.ForeignKey(
+        DataSource, related_name='devices', on_delete=models.CASCADE)
+
+    model = models.ForeignKey(
+        DeviceModel, related_name='devices', on_delete=models.CASCADE)
+    platform = models.CharField(max_length=(
+        1024 * 1024), null=True, blank=True)
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
@@ -1348,20 +1462,27 @@ class Device(models.Model):
 
         self.save()
 
-class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
-    device = models.ForeignKey(Device, related_name='issues',on_delete=models.CASCADE)
 
-    state = models.CharField(max_length=1024, choices=DEVICE_ISSUE_STATE_CHOICES, default='opened')
+class DeviceIssue(models.Model):  # pylint: disable=too-many-instance-attributes
+    device = models.ForeignKey(
+        Device, related_name='issues', on_delete=models.CASCADE)
+
+    state = models.CharField(
+        max_length=1024, choices=DEVICE_ISSUE_STATE_CHOICES, default='opened')
     created = models.DateTimeField()
     last_updated = models.DateTimeField()
 
-    user_agent = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
-    platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    user_agent = models.CharField(
+        max_length=(1024 * 1024), null=True, blank=True)
+    platform = models.CharField(max_length=(
+        1024 * 1024), null=True, blank=True)
     app = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
     version = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
-    device_model = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    device_model = models.CharField(
+        max_length=(1024 * 1024), null=True, blank=True)
 
-    description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+    description = models.TextField(
+        max_length=(1024 * 1024), null=True, blank=True)
     tags = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
 
     stability_related = models.BooleanField(default=False)
@@ -1377,8 +1498,9 @@ class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
     location_related = models.BooleanField(default=False)
     correctness_related = models.BooleanField(default=False)
 
+
 @receiver(pre_save, sender=DeviceIssue)
-def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+def device_issue_pre_save_handler(sender, **kwargs):  # pylint: disable=unused-argument, invalid-name
     issue = kwargs['instance']
 
     if issue.platform is None:

@@ -38,7 +38,8 @@ def valid_pdk_token_required(function):
 
 @csrf_exempt
 def pdk_request_token(request):
-    user = authenticate(username=request.POST['username'], password=request.POST['password'])
+    user = authenticate(
+        username=request.POST['username'], password=request.POST['password'])
 
     if user is not None and user.is_staff:
         now = timezone.now()
@@ -52,11 +53,13 @@ def pdk_request_token(request):
             token_duration = datetime.timedelta(days=7)
 
             try:
-                token_duration = datetime.timedelta(seconds=settings.PDK_TOKEN_LIFESPAN)
+                token_duration = datetime.timedelta(
+                    seconds=settings.PDK_TOKEN_LIFESPAN)
             except AttributeError:
                 print 'Unable to locate PDK_TOKEN_LIFESPAN in settings'
 
-            token = DataServerApiToken(user=user, expires=(now + token_duration))
+            token = DataServerApiToken(
+                user=user, expires=(now + token_duration))
             token.save()
 
         response = {}
@@ -70,7 +73,7 @@ def pdk_request_token(request):
 
 @csrf_exempt
 @valid_pdk_token_required
-def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-branches
+def pdk_data_point_query(request):  # pylint: disable=too-many-locals, too-many-branches
     if request.method == 'POST':
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
@@ -137,14 +140,17 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
         payload['matches'] = matches
 
-        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+        token = DataServerApiToken.objects.filter(
+            token=request.POST['token']).first()
 
         access_request = DataServerAccessRequestPending()
 
         if token is not None:
-            access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
+            access_request.user_identifier = str(
+                token.user.pk) + ': ' + str(token.user.username)
         else:
-            access_request.user_identifier = 'api_token: ' + request.POST['token']
+            access_request.user_identifier = 'api_token: ' + \
+                request.POST['token']
 
         access_request.request_type = 'api-data-points-request'
         access_request.request_time = timezone.now()
@@ -156,9 +162,10 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
     return HttpResponseNotAllowed(['POST'])
 
+
 @csrf_exempt
 @valid_pdk_token_required
-def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches
+def pdk_data_source_query(request):  # pylint: disable=too-many-locals, too-many-branches
     if request.method == 'POST':
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
@@ -226,14 +233,17 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
 
         payload['matches'] = matches
 
-        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+        token = DataServerApiToken.objects.filter(
+            token=request.POST['token']).first()
 
         access_request = DataServerAccessRequestPending()
 
         if token is not None:
-            access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
+            access_request.user_identifier = str(
+                token.user.pk) + ': ' + str(token.user.username)
         else:
-            access_request.user_identifier = 'api_token: ' + request.POST['token']
+            access_request.user_identifier = 'api_token: ' + \
+                request.POST['token']
 
         access_request.request_type = 'api-data-source-request'
         access_request.request_time = timezone.now()

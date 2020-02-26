@@ -10,7 +10,7 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = 'foobar' # nosec
+SECRET_KEY = 'foobar'  # nosec
 
 DEBUG = False
 ADMINS = [('Chris Karr', 'chris@audacious-software.com')]
@@ -95,4 +95,3 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
-

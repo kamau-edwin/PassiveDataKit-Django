@@ -36,9 +36,11 @@ from .models import DataPoint, DataBundle, DataGeneratorDefinition, DataSourceRe
 #    if identifier == 'web-historian':
 #
 
+
 def visualization(source, generator):
     try:
-        generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+        generator_module = importlib.import_module(
+            '.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
         output = generator_module.visualization(source, generator)
 
@@ -69,10 +71,12 @@ def visualization(source, generator):
 
     return render_to_string('pdk_generic_viz_template.html', context)
 
+
 def data_table(source, generator):
     for app in settings.INSTALLED_APPS:
         try:
-            generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package=app)
+            generator_module = importlib.import_module(
+                '.generators.' + generator.replace('-', '_'), package=app)
 
             output = generator_module.data_table(source, generator)
 
@@ -101,16 +105,19 @@ def data_table(source, generator):
 
     return render_to_string('pdk_generic_viz_template.html', context)
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     try:
-        generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+        generator_module = importlib.import_module(
+            '.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
         output_file = None
 
         try:
-            output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
+            output_file = generator_module.compile_report(
+                generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
         except TypeError:
-            print 'TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!'
+            print('TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!')
 
             output_file = generator_module.compile_report(generator, sources)
 
@@ -139,12 +146,14 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             'Properties'
         ])
 
-        generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+        generator_definition = DataGeneratorDefinition.definition_for_identifier(
+            generator)
 
         for source in sources:
             source_reference = DataSourceReference.reference_for_source(source)
 
-            points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+            points = DataPoint.objects.filter(
+                source_reference=source_reference, generator_definition=generator_definition)
 
             if data_start is not None:
                 if date_type == 'recorded':
@@ -190,9 +199,11 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     return filename
 
+
 def compile_visualization(identifier, points, folder):
     try:
-        generator_module = importlib.import_module('.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
+        generator_module = importlib.import_module(
+            '.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
 
         generator_module.compile_visualization(identifier, points, folder)
     except ImportError:
@@ -200,9 +211,11 @@ def compile_visualization(identifier, points, folder):
     except AttributeError:
         pass
 
+
 def extract_location_method(identifier):
     try:
-        generator_module = importlib.import_module('.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
+        generator_module = importlib.import_module(
+            '.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
 
         return generator_module.extract_location
     except ImportError:
@@ -211,6 +224,7 @@ def extract_location_method(identifier):
         pass
 
     return None
+
 
 def send_to_destination(destination, report_path):
     file_sent = False
@@ -255,11 +269,14 @@ def send_to_destination(destination, report_path):
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
-                key = paramiko.RSAKey.from_private_key(StringIO.StringIO(parameters['key']))
+                key = paramiko.RSAKey.from_private_key(
+                    StringIO.StringIO(parameters['key']))
 
                 ssh_client = paramiko.SSHClient()
-                ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
+                ssh_client.set_missing_host_key_policy(
+                    paramiko.AutoAddPolicy())
+                ssh_client.connect(
+                    hostname=parameters['host'], username=parameters['username'], pkey=key)
 
                 ftp_client = ssh_client.open_sftp()
                 ftp_client.put(report_path, path)
@@ -270,7 +287,8 @@ def send_to_destination(destination, report_path):
             traceback.print_exc()
 
     if file_sent is False:
-        print 'Unable to transmit report to destination "' + destination.destination + '".'
+        print('Unable to transmit report to destination "' + destination.destination + '".')
+
 
 def annotate_source_definition(source, definition):
     active_alerts = []
@@ -306,6 +324,7 @@ def annotate_source_definition(source, definition):
 
     return definition
 
+
 def load_backup(filename, content):
     prefix = 'pdk_backup_' + settings.ALLOWED_HOSTS[0]
 
@@ -333,9 +352,10 @@ def load_backup(filename, content):
 
         bundle.save()
     else:
-        print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
+        printi('[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
 
-def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements
+
+def incremental_backup(parameters):  # pylint: disable=too-many-locals, too-many-statements
     to_transmit = []
     to_clear = []
 
@@ -361,7 +381,8 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         prefix += '_' + parameters['start_date'].date().isoformat()
 
     if 'end_date' in parameters:
-        prefix += '_' + (parameters['end_date'].date() - datetime.timedelta(days=1)).isoformat()
+        prefix += '_' + (parameters['end_date'].date() -
+                         datetime.timedelta(days=1)).isoformat()
 
     backup_staging = tempfile.gettempdir()
 
@@ -425,7 +446,8 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     index = 0
 
     while index < count:
-        filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.pdk-bundle.bz2'
+        filename = prefix + '_data_points_' + \
+            str(index) + '_' + str(count) + '.pdk-bundle.bz2'
 
         print '[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...'
 

@@ -22,16 +22,19 @@ Via: http://rosslawley.co.uk/archive/old/2010/10/18/locking-django-management-co
 # Default behavior is to never wait for the lock to be available (fail fast)
 LOCK_WAIT_TIMEOUT = getattr(settings, "DEFAULT_LOCK_WAIT_TIMEOUT", -1)
 
+
 def handle_lock(handle):
     """
     Decorate the handle method with a file lock to ensure there is only ever
     one process running at any one time.
     """
+
     def wrapper(self, *args, **options):
         lock_prefix = ''
 
         try:
-            lock_prefix = settings.SITE_URL.split('//')[1].replace('/', '').replace('.', '-')
+            lock_prefix = settings.SITE_URL.split(
+                '//')[1].replace('/', '').replace('.', '-')
         except AttributeError:
             try:
                 lock_prefix = settings.ALLOWED_HOSTS[0].replace('.', '-')
@@ -55,7 +58,8 @@ def handle_lock(handle):
         logging.debug("-" * 72)
 
         lock_name = self.__module__.split('.').pop()
-        lock = FileLock('%s/%s__%s' % (tempfile.gettempdir(), lock_prefix, lock_name))
+        lock = FileLock('%s/%s__%s' %
+                        (tempfile.gettempdir(), lock_prefix, lock_name))
 
         logging.debug("%s - acquiring lock...", lock_name)
 
@@ -72,7 +76,7 @@ def handle_lock(handle):
 
         try:
             handle(self, *args, **options)
-        except: # pylint: disable=bare-except
+        except:  # pylint: disable=bare-except
             import traceback
             logging.error("Command Failed")
             logging.error('==' * 72)
@@ -92,15 +96,18 @@ def handle_lock(handle):
 '''
 Logs timestamp to Nagios monitoring system for last run of scheduled job.
 '''
+
+
 def log_scheduled_event(handle):
     def wrapper(self, *args, **options):
         try:
-            from nagios_monitor.models import ScheduledEvent # pylint: disable=import-error
+            from nagios_monitor.models import ScheduledEvent  # pylint: disable=import-error
 
             event_name = self.__module__.split('.').pop()
 
             try:
-                event_prefix = settings.SITE_URL.split('//')[1].replace('/', '').replace('.', '-')
+                event_prefix = settings.SITE_URL.split(
+                    '//')[1].replace('/', '').replace('.', '-')
             except AttributeError:
                 try:
                     event_prefix = settings.ALLOWED_HOSTS[0].replace('.', '-')
@@ -109,7 +116,8 @@ def log_scheduled_event(handle):
 
             event_prefix = slugify(event_prefix)
 
-            ScheduledEvent.log_event(event_prefix + '_' + event_name, timezone.now())
+            ScheduledEvent.log_event(
+                event_prefix + '_' + event_name, timezone.now())
 
         except ImportError:
             # nagios_monitor app not installed

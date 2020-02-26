@@ -13,11 +13,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import DataPoint, install_supports_jsonfield
 
-AUTHORIZE_URL = 'https://account.withings.com/oauth2_user/authorize2' # nosec
-ACCESS_TOKEN_URL = 'https://account.withings.com/oauth2/token' # nosec
+AUTHORIZE_URL = 'https://account.withings.com/oauth2_user/authorize2'  # nosec
+ACCESS_TOKEN_URL = 'https://account.withings.com/oauth2/token'  # nosec
+
 
 @csrf_exempt
-def pdk_withings_start(request, source_id): # pylint: disable=unused-argument
+def pdk_withings_start(request, source_id):  # pylint: disable=unused-argument
     params = {
         'response_type': 'code',
         'client_id': settings.PDK_WITHINGS_CLIENT_ID,
@@ -44,7 +45,8 @@ def pdk_withings_auth(request):
 
     response = requests.post(ACCESS_TOKEN_URL, data=params)
 
-    point = DataPoint(source=source_id, generator='pdk-withings-server-auth', created=timezone.now())
+    point = DataPoint(
+        source=source_id, generator='pdk-withings-server-auth', created=timezone.now())
     point.recorded = point.created
     point.generator_identifier = point.generator
     point.server_generated = True

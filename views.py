@@ -8,7 +8,7 @@ import re
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
-                        FileResponse, UnreadablePostError, Http404
+    FileResponse, UnreadablePostError, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -16,8 +16,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 
 from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, \
-                    generator_label, install_supports_jsonfield, DataSourceAlert, \
-                    DataServerMetadatum, AppConfiguration, DeviceIssue, Device
+    generator_label, install_supports_jsonfield, DataSourceAlert, \
+    DataServerMetadatum, AppConfiguration, DeviceIssue, Device
 
 
 @csrf_exempt
@@ -25,7 +25,7 @@ def pdk_add_data_point(request):
     response = {'message': 'Data point added successfully.'}
 
     if request.method == 'CREATE':
-        response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', \
+        response = HttpResponse(json.dumps(response, indent=2), content_type='application/json',
                                 status=201)
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Methods'] = 'CREATE, POST'
@@ -37,7 +37,8 @@ def pdk_add_data_point(request):
         data_point = DataPoint(recorded=timezone.now())
         data_point.source = point['passive-data-metadata']['source']
         data_point.generator = point['passive-data-metadata']['generator']
-        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone()) # pylint: disable=line-too-long
+        data_point.created = datetime.datetime.fromtimestamp(
+            point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())  # pylint: disable=line-too-long
 
         if install_supports_jsonfield():
             data_point.properties = point
@@ -48,8 +49,8 @@ def pdk_add_data_point(request):
 
         return response
     elif request.method == 'POST':
-        response = HttpResponse(json.dumps(response, indent=2), \
-                                content_type='application/json', \
+        response = HttpResponse(json.dumps(response, indent=2),
+                                content_type='application/json',
                                 status=201)
 
         response['Access-Control-Allow-Origin'] = '*'
@@ -62,7 +63,8 @@ def pdk_add_data_point(request):
         data_point = DataPoint(recorded=timezone.now())
         data_point.source = point['passive-data-metadata']['source']
         data_point.generator = point['passive-data-metadata']['generator']
-        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone()) # pylint: disable=line-too-long
+        data_point.created = datetime.datetime.fromtimestamp(
+            point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())  # pylint: disable=line-too-long
 
         if install_supports_jsonfield():
             data_point.properties = point
@@ -85,15 +87,15 @@ def pdk_add_data_point(request):
 
 
 @csrf_exempt
-def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-many-branches
+def pdk_add_data_bundle(request):  # pylint: disable=too-many-statements, too-many-branches
     response = {
         'message': 'Data bundle added successfully, and ready for processing.',
         'added': True
     }
 
     if request.method == 'CREATE':
-        response = HttpResponse(json.dumps(response, indent=2), \
-                                content_type='application/json', \
+        response = HttpResponse(json.dumps(response, indent=2),
+                                content_type='application/json',
                                 status=201)
 
         response['Access-Control-Allow-Origin'] = '*'
@@ -107,8 +109,8 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
             points = json.loads(request.body)
         except UnreadablePostError:
             response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response, indent=2), \
-                                    content_type='application/json', \
+            response = HttpResponse(json.dumps(response, indent=2),
+                                    content_type='application/json',
                                     status=400)
 
             return response
@@ -125,8 +127,8 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
         return response
 
     elif request.method == 'POST':
-        response = HttpResponse(json.dumps(response, indent=2), \
-                                content_type='application/json', \
+        response = HttpResponse(json.dumps(response, indent=2),
+                                content_type='application/json',
                                 status=201)
 
         response['Access-Control-Allow-Origin'] = '*'
@@ -174,16 +176,16 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
             bundle.save()
         except ValueError:
             response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response, indent=2), \
-                                    content_type='application/json', \
+            response = HttpResponse(json.dumps(response, indent=2),
+                                    content_type='application/json',
                                     status=400)
         except UnreadablePostError:
             response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response, indent=2), \
-                                    content_type='application/json', \
+            response = HttpResponse(json.dumps(response, indent=2),
+                                    content_type='application/json',
                                     status=400)
 
-        for key, value in request.FILES.iteritems(): # pylint: disable=unused-variable
+        for key, value in request.FILES.iteritems():  # pylint: disable=unused-variable
             data_file = DataFile(data_bundle=bundle)
             data_file.identifier = value.name
             data_file.content_type = value.content_type
@@ -208,12 +210,11 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
         return response
 
-
     return HttpResponseNotAllowed(['CREATE', 'POST', 'HEAD'])
 
 
 @staff_member_required
-def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
+def pdk_home(request):  # pylint: disable=too-many-branches, too-many-statements
     for app in settings.INSTALLED_APPS:
         try:
             app_views = importlib.import_module(app + '.views')
@@ -293,13 +294,14 @@ def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
             source.save()
 
     context['groups'] = DataSourceGroup.objects.order_by('name')
-    context['solo_sources'] = DataSource.objects.filter(group=None).order_by('name')
+    context['solo_sources'] = DataSource.objects.filter(
+        group=None).order_by('name')
 
     return render(request, 'pdk_home.html', context=context)
 
 
 @staff_member_required
-def pdk_source(request, source_id): # pylint: disable=unused-argument
+def pdk_source(request, source_id):  # pylint: disable=unused-argument
     if '/' in source_id:
         return redirect('pdk_source', source_id=source_id.replace('/', ''))
 
@@ -313,13 +315,14 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
 
     context['source'] = source
 
-    context['alerts'] = DataSourceAlert.objects.filter(active=True, data_source=source)
+    context['alerts'] = DataSourceAlert.objects.filter(
+        active=True, data_source=source)
 
     return render(request, 'pdk_source.html', context=context)
 
 
 @staff_member_required
-def pdk_source_generator(request, source_id, generator_id): # pylint: disable=unused-argument
+def pdk_source_generator(request, source_id, generator_id):  # pylint: disable=unused-argument
     if ('/' in source_id) or ('/' in generator_id):
         return redirect('pdk_source_generator', source_id=source_id.replace('/', ''), generator_id=generator_id.replace('/', ''))
 
@@ -342,7 +345,8 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
             try:
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
-                context['visualization'] = pdk_api.visualization(source, generator_id)
+                context['visualization'] = pdk_api.visualization(
+                    source, generator_id)
             except ImportError:
                 pass
             except AttributeError:
@@ -362,7 +366,7 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
 
 
 @staff_member_required
-def pdk_unmatched_sources(request): # pylint: disable=unused-argument
+def pdk_unmatched_sources(request):  # pylint: disable=unused-argument
     sources = DataPoint.objects.sources()
 
 #    for point in DataPoint.objects.order_by('source').values_list('source', flat=True).distinct():
@@ -372,8 +376,9 @@ def pdk_unmatched_sources(request): # pylint: disable=unused-argument
 
 
 @staff_member_required
-def pdk_visualization_data(request, source_id, generator_id, page): # pylint: disable=unused-argument
-    folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + source_id + '/' + generator_id
+def pdk_visualization_data(request, source_id, generator_id, page):  # pylint: disable=unused-argument
+    folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + \
+        source_id + '/' + generator_id
 
     filename = 'visualization-' + page + '.json'
 
@@ -390,14 +395,16 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
 
 
 @staff_member_required
-def pdk_download_report(request, report_id): # pylint: disable=unused-argument
+def pdk_download_report(request, report_id):  # pylint: disable=unused-argument
     job = get_object_or_404(ReportJob, pk=int(report_id))
 
     filename = settings.MEDIA_ROOT + '/' + job.report.name
 
-    response = FileResponse(open(filename, 'rb'), content_type='application/octet-stream')
+    response = FileResponse(open(filename, 'rb'),
+                            content_type='application/octet-stream')
 
-    download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + str(job.pk) + '.zip'
+    download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + \
+        str(job.pk) + '.zip'
 
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = 'attachment; filename=' + download_name
@@ -406,7 +413,7 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 
 
 @staff_member_required
-def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
+def pdk_export(request):  # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     context = {}
 
     context['sources'] = sorted(DataPoint.objects.sources())
@@ -436,12 +443,13 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
     except AttributeError:
         pass
 
-    for app in settings.INSTALLED_APPS: # pylint: disable=too-many-nested-blocks
+    for app in settings.INSTALLED_APPS:  # pylint: disable=too-many-nested-blocks
         for generator in context['generators']:
             try:
                 module_name = '.generators.' + generator.replace('-', '_')
 
-                generator_module = importlib.import_module(module_name, package=app)
+                generator_module = importlib.import_module(
+                    module_name, package=app)
 
                 extra_generators = generator_module.extra_generators(generator)
 
@@ -491,19 +499,20 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
             if key in request.POST:
                 export_generators.append(generator[0])
 
-        if len(export_sources) == 0: # pylint: disable=len-as-condition
+        if len(export_sources) == 0:  # pylint: disable=len-as-condition
             context['message_type'] = 'error'
 
-            if len(export_generators) == 0: # pylint: disable=len-as-condition
-                context['message'] = 'Please select one or more sources and generators to export data.' # pylint: disable=line-too-long
+            if len(export_generators) == 0:  # pylint: disable=len-as-condition
+                context['message'] = 'Please select one or more sources and generators to export data.'  # pylint: disable=line-too-long
             else:
                 context['message'] = 'Please select one or more sources to export data.'
-        elif len(export_generators) == 0: # pylint: disable=len-as-condition
+        elif len(export_generators) == 0:  # pylint: disable=len-as-condition
             context['message_type'] = 'error'
 
             context['message'] = 'Please select one or more generators to export data.'
         else:
-            export_raw = ('export_raw_json' in request.POST and request.POST['export_raw_json'])
+            export_raw = (
+                'export_raw_json' in request.POST and request.POST['export_raw_json'])
 
             data_start = request.POST['data_start']
 
@@ -511,14 +520,15 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
             date_type = request.POST['date_type']
 
-            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw, data_start, data_end, date_type)
+            created = ReportJob.objects.create_jobs(
+                request.user, export_sources, export_generators, export_raw, data_start, data_end, date_type)
 
             context['message_type'] = 'ok'
 
             if created == 1:
-                context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=line-too-long
+                context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.'  # pylint: disable=line-too-long
             else:
-                context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.' # pylint: disable=line-too-long
+                context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.'  # pylint: disable=line-too-long
 
     return render(request, 'pdk_export.html', context=context)
 
@@ -560,7 +570,8 @@ def pdk_profile(request):
 
     return render(request, 'pdk_user_profile.html', context=context)
 
-def pdk_app_config(request): # pylint: disable=too-many-statements
+
+def pdk_app_config(request):  # pylint: disable=too-many-statements
     if request.method == 'GET':
         if 'id' in request.GET and 'context' in request.GET:
             identifier = request.GET['id']
@@ -575,14 +586,16 @@ def pdk_app_config(request): # pylint: disable=too-many-statements
 
     raise Http404('Matching configuration not found.')
 
+
 @staff_member_required
 def pdk_issues(request):
     context = {}
 
     return render(request, 'pdk_issues.html', context=context)
 
+
 @staff_member_required
-def pdk_issues_json(request): # pylint: disable=too-many-statements
+def pdk_issues_json(request):  # pylint: disable=too-many-statements
     payload = []
 
     if request.method == 'POST':
@@ -592,7 +605,8 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
         }
 
         if 'source' in request.POST:
-            source = DataSource.objects.filter(identifier=request.POST['source']).first()
+            source = DataSource.objects.filter(
+                identifier=request.POST['source']).first()
 
             if source is not None:
                 device = Device.objects.filter(source=source).first()
@@ -608,25 +622,33 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
                 issue.created = timezone.now()
                 issue.last_updated = timezone.now()
 
-                issue.stability_related = (request.POST['app_stability'] == 'true')
+                issue.stability_related = (
+                    request.POST['app_stability'] == 'true')
                 issue.uptime_related = (request.POST['app_uptime'] == 'true')
-                issue.responsiveness_related = (request.POST['app_responsiveness'] == 'true')
+                issue.responsiveness_related = (
+                    request.POST['app_responsiveness'] == 'true')
                 issue.battery_use_related = (request.POST['battery'] == 'true')
-                issue.power_management_related = (request.POST['power'] == 'true')
-                issue.data_volume_related = (request.POST['data_volume'] == 'true')
-                issue.data_quality_related = (request.POST['data_quality'] == 'true')
+                issue.power_management_related = (
+                    request.POST['power'] == 'true')
+                issue.data_volume_related = (
+                    request.POST['data_volume'] == 'true')
+                issue.data_quality_related = (
+                    request.POST['data_quality'] == 'true')
                 issue.bandwidth_related = (request.POST['bandwidth'] == 'true')
                 issue.storage_related = (request.POST['storage'] == 'true')
-                issue.configuration_related = (request.POST['app_configuration'] == 'true')
+                issue.configuration_related = (
+                    request.POST['app_configuration'] == 'true')
                 issue.location_related = (request.POST['location'] == 'true')
-                issue.correctness_related = (request.POST['app_correctness'] == 'true')
+                issue.correctness_related = (
+                    request.POST['app_correctness'] == 'true')
 
                 issue.save()
 
                 payload['message'] = 'New issue created successfully.'
                 payload['success'] = True
             else:
-                payload['message'] = 'Unable to locate data source with identifier: ' + request.POST['source'] + '.'
+                payload['message'] = 'Unable to locate data source with identifier: ' + \
+                    request.POST['source'] + '.'
         else:
             payload['message'] = 'Source identifier not provided.'
     else:
@@ -664,6 +686,7 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
 
     return JsonResponse(payload, safe=False, json_dumps_params={'indent': 2})
 
+
 @csrf_exempt
 def pdk_fetch_metadata_json(request):
     metadata = {}
@@ -671,7 +694,8 @@ def pdk_fetch_metadata_json(request):
     if 'identifier' in request.POST and 'request-key' in request.POST:
         try:
             if request.POST['request-key'] == settings.PDK_REQUEST_KEY:
-                source = DataSource.objects.filter(identifier=request.POST['identifier']).first()
+                source = DataSource.objects.filter(
+                    identifier=request.POST['identifier']).first()
 
                 if source is not None:
                     metadata = source.fetch_performance_metadata()
